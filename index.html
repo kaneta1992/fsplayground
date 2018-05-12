@@ -11,22 +11,29 @@
     // ページの読み込みを待つ
     window.addEventListener('load', init);
 
-    const header_fs = "varying vec2 texCoord;\n";
+    const header_fs = "varying vec2 texCoord;\n\
+    uniform float time;";
     const initial_fs = "void main() {\n\
   gl_FragColor = vec4(texCoord, 0.0, 1.0);\n\
 }";
 
-    var jsEditor;
+    var glslEditor;
     var mesh;
     function rebuild() {
         const material = new THREE.ShaderMaterial({
           vertexShader: document.getElementById('vs').textContent,
-          fragmentShader: header_fs + jsEditor.getValue(),
+          fragmentShader: header_fs + glslEditor.getValue(),
+          uniforms: {
+            time: {
+                type: 'f',
+                value: 0.0
+            },
+          }
         });
         mesh.material = material;
     }
     function init() {
-      jsEditor = CodeMirror.fromTextArea(document.getElementById('editor_js'), {
+      glslEditor = CodeMirror.fromTextArea(document.getElementById('editor_glsl'), {
         mode: "x-shader/x-fragment",
         lineNumbers: true,
         indentUnit: 2
@@ -37,7 +44,7 @@
 
       // レンダラーを作成
       const renderer = new THREE.WebGLRenderer({
-        canvas: document.querySelector('#myCanvas')
+        canvas: document.querySelector('#canvas')
       });
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(width, height);
@@ -47,15 +54,15 @@
       var geometry = new THREE.PlaneBufferGeometry( 2, 2 );
       mesh = new THREE.Mesh(geometry, null);
       scene.add(mesh);
-      jsEditor.setValue(initial_fs);
+      glslEditor.setValue(initial_fs);
       rebuild();
 
       tick();
 
-      // 毎フレーム時に実行されるループイベントです
+      var time = 0.0;
       function tick() {
+        mesh.material.uniforms.time.value += 0.016666;
         renderer.render(scene, camera); // レンダリング
-
         requestAnimationFrame(tick);
       }
     }
@@ -69,8 +76,8 @@
   </script>
 </head>
 <body>
-  <canvas id="myCanvas"></canvas>
-  <textarea id="editor_js" rows="30" cols="50"></textarea>
+  <canvas id="canvas"></canvas>
+  <textarea id="editor_glsl" rows="30" cols="50"></textarea>
   <button type="button" onclick="rebuild();">ビルド</button>
 </body>
 </html>
