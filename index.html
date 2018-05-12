@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/92/three.min.js"></script>
+  <script>
+    // ページの読み込みを待つ
+    window.addEventListener('load', init);
+
+    function init() {
+
+      // サイズを指定
+      const width = 512;
+      const height = 512;
+
+      // レンダラーを作成
+      const renderer = new THREE.WebGLRenderer({
+        canvas: document.querySelector('#myCanvas')
+      });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(width, height);
+
+      const camera = new THREE.Camera();
+      camera.position.z = 1;
+
+      const scene = new THREE.Scene();
+
+      var geometry = new THREE.PlaneBufferGeometry( 2, 2 );
+
+      const material = new THREE.ShaderMaterial({
+        vertexShader: document.getElementById('vs').textContent,
+        fragmentShader: document.getElementById('fs').textContent
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
+
+      tick();
+
+      // 毎フレーム時に実行されるループイベントです
+      function tick() {
+        renderer.render(scene, camera); // レンダリング
+
+        requestAnimationFrame(tick);
+      }
+    }
+  </script>
+  <script id="vs" type="x-shader/x-vertex">
+      varying vec2 texCoord;
+      void main() {
+          texCoord = uv;
+          gl_Position = vec4( position, 1.0 );
+      }
+  </script>
+  
+  <script id="fs" type="x-shader/x-fragment">
+      varying vec2 texCoord;
+      void main() {
+          gl_FragColor = vec4(texCoord, 0.0, 1.0);
+      }
+  </script>
+</head>
+<body>
+  <canvas id="myCanvas"></canvas>
+</body>
+</html>
