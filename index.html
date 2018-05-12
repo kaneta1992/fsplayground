@@ -11,13 +11,26 @@
     // ページの読み込みを待つ
     window.addEventListener('load', init);
 
-    function init() {
+    const header_fs = "varying vec2 texCoord;\n";
+    const initial_fs = "void main() {\n\
+  gl_FragColor = vec4(texCoord, 0.0, 1.0);\n\
+}";
 
-    var jsEditor = CodeMirror.fromTextArea(document.getElementById('editor_js'), {
-      mode: "x-shader/x-fragment",
-      lineNumbers: true,
-      indentUnit: 4
-    });
+    var jsEditor;
+    var mesh;
+    function rebuild() {
+        const material = new THREE.ShaderMaterial({
+          vertexShader: document.getElementById('vs').textContent,
+          fragmentShader: header_fs + jsEditor.getValue(),
+        });
+        mesh.material = material;
+    }
+    function init() {
+      jsEditor = CodeMirror.fromTextArea(document.getElementById('editor_js'), {
+        mode: "x-shader/x-fragment",
+        lineNumbers: true,
+        indentUnit: 2
+      });
       // サイズを指定
       const width = 512;
       const height = 512;
@@ -30,18 +43,12 @@
       renderer.setSize(width, height);
 
       const camera = new THREE.Camera();
-      camera.position.z = 1;
-
       const scene = new THREE.Scene();
-
       var geometry = new THREE.PlaneBufferGeometry( 2, 2 );
-
-      const material = new THREE.ShaderMaterial({
-        vertexShader: document.getElementById('vs').textContent,
-        fragmentShader: document.getElementById('fs').textContent
-      });
-      const mesh = new THREE.Mesh(geometry, material);
+      mesh = new THREE.Mesh(geometry, null);
       scene.add(mesh);
+      jsEditor.setValue(initial_fs);
+      rebuild();
 
       tick();
 
@@ -60,16 +67,10 @@
           gl_Position = vec4( position, 1.0 );
       }
   </script>
-  
-  <script id="fs" type="x-shader/x-fragment">
-      varying vec2 texCoord;
-      void main() {
-          gl_FragColor = vec4(texCoord, 0.0, 1.0);
-      }
-  </script>
 </head>
 <body>
   <canvas id="myCanvas"></canvas>
   <textarea id="editor_js" rows="30" cols="50"></textarea>
+  <button type="button" onclick="rebuild();">ビルド</button>
 </body>
 </html>
