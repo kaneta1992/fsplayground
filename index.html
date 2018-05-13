@@ -50,6 +50,29 @@
         value: data[name],
       };
     }
+    const numToName = {
+      0: "x",
+      1: "y",
+      2: "z",
+      3: "w",
+    }
+    function addVec(data, name, num) {
+      data[name] = {};
+      var folder = gui.addFolder(name);
+      for (var i = 0; i < num; i++) {
+        const elementName = numToName[i];
+        data[name][elementName] = 0.0;
+        folder.add(data[name], elementName).onChange(function() {
+          mesh.material.uniforms[name].value[elementName] = data[name][elementName];
+        });
+      }
+      const numToInitVecData = {
+        2: { value: new THREE.Vector2(0, 0), type: "v2" },
+        3: { value: new THREE.Vector3(0, 0, 0), type: "v3" },
+        4: { value: new THREE.Vector4(0, 0, 0, 0), type: "v4" },
+      }
+      mesh.material.uniforms[name] = numToInitVecData[num];
+    }
     function buildGUI() {
       var uniforms_info = getUniforms();
       if (gui) {
@@ -61,6 +84,15 @@
         switch (row.type) {
           case "float":
             addFloat(gui_data, row.name);
+            break;
+          case "vec2":
+            addVec(gui_data, row.name, 2);
+            break;
+          case "vec3":
+            addVec(gui_data, row.name, 3);
+            break;
+          case "vec4":
+            addVec(gui_data, row.name, 4);
             break;
           case "sampler2D":
             gui_data[row.name] = "";
