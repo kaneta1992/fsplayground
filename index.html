@@ -40,9 +40,11 @@
       return uniforms_info;
     }
 
-    var gui;
+    let gui, prev_uniforms;
     function addFloat(data, name) {
-      data[name] = 0.0;
+      if (!data[name] || prev_uniforms[name].type != "f") {
+        data[name] = 0.0;
+      }
       gui.add(data, name).onChange(function() {
         mesh.material.uniforms[name].value = data[name];
       });
@@ -58,25 +60,32 @@
       3: "w",
     }
     function addVec(data, name, num) {
-      data[name] = {};
+      if (!data[name] || prev_uniforms[name].type != "f2" || prev_uniforms[name].type != "f3" || prev_uniforms[name].type != "f4") {
+        data[name] = {};
+      }
       var folder = gui.addFolder(name);
       for (var i = 0; i < num; i++) {
         const elementName = numToName[i];
-        data[name][elementName] = 0.0;
+        if (!data[name][elementName]) {
+          data[name][elementName] = 0.0;
+        }
         folder.add(data[name], elementName).onChange(function() {
           mesh.material.uniforms[name].value[elementName] = data[name][elementName];
         });
       }
       const numToInitVecData = {
-        2: { value: new THREE.Vector2(0, 0), type: "v2" },
-        3: { value: new THREE.Vector3(0, 0, 0), type: "v3" },
-        4: { value: new THREE.Vector4(0, 0, 0, 0), type: "v4" },
+        2: { value: data[name], type: "v2" },
+        3: { value: data[name], type: "v3" },
+        4: { value: data[name], type: "v4" },
       }
       mesh.material.uniforms[name] = numToInitVecData[num];
     }
 
     let select_uniform_name
-    function addTexture(name) {
+    function addTexture(data, name) {
+      if (!data[name] || prev_uniforms[name].type != "t") {
+        data[name] = {};
+      }
       let texture_callback = {}
       texture_callback[name] = function() {
         select_uniform_name = name;
@@ -85,16 +94,17 @@
       gui.add(texture_callback, name)
       mesh.material.uniforms[name] = {
         type:  "t",
-        value: new THREE.Texture(),
+        value: data[name],
       };
     }
+
+    let gui_data = {};
     function buildGUI() {
       var uniforms_info = getUniforms();
       if (gui) {
         gui.destroy();
       }
       gui = new dat.GUI();
-      var gui_data = {};
       uniforms_info.forEach(function(row) {
         switch (row.type) {
           case "float":
@@ -110,7 +120,7 @@
             addVec(gui_data, row.name, 4);
             break;
           case "sampler2D":
-            addTexture(row.name);
+            addTexture(gui_data, row.name);
             break;
           default:
             break;
@@ -129,6 +139,7 @@
           },
         },
       });
+      prev_uniforms = mesh.material.uniforms;
       mesh.material = material;
 
       // シェーダーを事前にコンパイルしてエラーチェック
@@ -148,8 +159,8 @@
         indentUnit: 2
       });
       // サイズを指定
-      const width = 512;
-      const height = 512;
+      const width = 512 * 0.8;
+      const height = 720 * 0.8;
 
       // レンダラーを作成
       renderer = new THREE.WebGLRenderer({
@@ -162,6 +173,7 @@
       scene = new THREE.Scene();
       var geometry = new THREE.PlaneBufferGeometry( 2, 2 );
       mesh = new THREE.Mesh(geometry, null);
+      mesh.material = {uniforms: {}};
       scene.add(mesh);
       glslEditor.setValue(initial_fs);
       rebuild();
@@ -183,10 +195,10 @@
           img.src = event.target.result;
  
           // テクスチャの更新（meshは作成済みのオブジェクト）
-          let texture = new THREE.Texture( img );
-          texture.needsUpdate = true;
-          mesh.material.uniforms[select_uniform_name].value = texture;
-          console.log(texture);
+          gui_data[select_uniform_name] = new THREE.Texture( img );
+          gui_data[select_uniform_name].needsUpdate = true;
+          mesh.material.uniforms[select_uniform_name].value = gui_data[select_uniform_name];
+          console.log(gui_data[select_uniform_name]);
         };
         // データURLとしてファイルを読み込む
         reader.readAsDataURL( file );
