@@ -24,7 +24,7 @@
 
     function getUniforms() {
       var code = glslEditor.getValue();
-      var uniforms = code.match(/uniform.*;/g);
+      var uniforms = code.match(/uniform.*\n/g);
       if (!uniforms) {
         return [];
       }
@@ -34,6 +34,8 @@
         var uniform_info = {
           type: split_uniform_text[1],
           name: split_uniform_text[2].slice(0, -1),
+          min:  split_uniform_text[4],
+          max:  split_uniform_text[5],
         };
         uniforms_info.push(uniform_info);
       });
@@ -41,16 +43,25 @@
     }
 
     let gui, prev_uniforms;
-    function addFloat(data, name) {
-      if (!data[name] || prev_uniforms[name].type != "f") {
-        data[name] = 0.0;
+    function addFloat(data, info) {
+      if (!data[info.name] || prev_uniforms[info.name].type != "f") {
+        data[info.name] = 0.0;
       }
-      gui.add(data, name).onChange(function() {
-        mesh.material.uniforms[name].value = data[name];
-      });
-      mesh.material.uniforms[name] = {
+      console.log(info);
+      if (info.min && info.max) {
+        let min = parseFloat(info.min);
+        let max = parseFloat(info.max);
+        gui.add(data, info.name, min, max, (max - min) / 10000.0).onChange(function() {
+          mesh.material.uniforms[info.name].value = data[info.name];
+        });
+      } else {
+        gui.add(data, info.name).onChange(function() {
+          mesh.material.uniforms[info.name].value = data[info.name];
+        });
+      }
+      mesh.material.uniforms[info.name] = {
         type:  "f",
-        value: data[name],
+        value: data[info.name],
       };
     }
     const numToName = {
@@ -59,26 +70,34 @@
       2: "z",
       3: "w",
     }
-    function addVec(data, name, num) {
-      if (!data[name] || prev_uniforms[name].type != "f2" || prev_uniforms[name].type != "f3" || prev_uniforms[name].type != "f4") {
-        data[name] = {};
+    function addVec(data, info, num) {
+      if (!data[info.name] || prev_uniforms[info.name].type != "f2" || prev_uniforms[info.name].type != "f3" || prev_uniforms[info.name].type != "f4") {
+        data[info.name] = {};
       }
-      var folder = gui.addFolder(name);
+      var folder = gui.addFolder(info.name);
       for (var i = 0; i < num; i++) {
         const elementName = numToName[i];
-        if (!data[name][elementName]) {
-          data[name][elementName] = 0.0;
+        if (!data[info.name][elementName]) {
+          data[info.name][elementName] = 0.0;
         }
-        folder.add(data[name], elementName).onChange(function() {
-          mesh.material.uniforms[name].value[elementName] = data[name][elementName];
-        });
+        if (info.min && info.max) {
+          let min = parseFloat(info.min);
+          let max = parseFloat(info.max);
+          folder.add(data[info.name], elementName, min, max, (max - min) / 10000.0).onChange(function() {
+            mesh.material.uniforms[info.name].value[elementName] = data[info.name][elementName];
+          });
+        } else {
+          folder.add(data[info.name], elementName).onChange(function() {
+            mesh.material.uniforms[info.name].value[elementName] = data[info.name][elementName];
+          });
+        }
       }
       const numToInitVecData = {
-        2: { value: data[name], type: "v2" },
-        3: { value: data[name], type: "v3" },
-        4: { value: data[name], type: "v4" },
+        2: { value: data[info.name], type: "v2" },
+        3: { value: data[info.name], type: "v3" },
+        4: { value: data[info.name], type: "v4" },
       }
-      mesh.material.uniforms[name] = numToInitVecData[num];
+      mesh.material.uniforms[info.name] = numToInitVecData[num];
     }
 
     let select_uniform_name
@@ -108,16 +127,16 @@
       uniforms_info.forEach(function(row) {
         switch (row.type) {
           case "float":
-            addFloat(gui_data, row.name);
+            addFloat(gui_data, row);
             break;
           case "vec2":
-            addVec(gui_data, row.name, 2);
+            addVec(gui_data, row, 2);
             break;
           case "vec3":
-            addVec(gui_data, row.name, 3);
+            addVec(gui_data, row, 3);
             break;
           case "vec4":
-            addVec(gui_data, row.name, 4);
+            addVec(gui_data, row, 4);
             break;
           case "sampler2D":
             addTexture(gui_data, row.name);
@@ -139,7 +158,7 @@
           },
         },
       });
-      prev_uniforms = mesh.material.uniforms;
+      let backup_material = mesh.material;
       mesh.material = material;
 
       // シェーダーを事前にコンパイルしてエラーチェック
@@ -147,8 +166,10 @@
       var gl = renderer.getContext();
       if (gl.getProgramParameter(material.program.program, gl.LINK_STATUS)) {
         console.log("OK");
+        prev_uniforms = backup_material.uniforms;
         buildGUI();
       } else {
+        mesh.material = backup_material;
         console.log("NG");
       }
     }
