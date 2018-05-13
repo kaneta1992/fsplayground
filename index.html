@@ -8,6 +8,7 @@
   <script src="codemirror/mode/glsl/glsl.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/92/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.1/dat.gui.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
   <script>
     // ページの読み込みを待つ
     window.addEventListener('load', init);
@@ -73,6 +74,20 @@
       }
       mesh.material.uniforms[name] = numToInitVecData[num];
     }
+
+    let select_uniform_name
+    function addTexture(name) {
+      let texture_callback = {}
+      texture_callback[name] = function() {
+        select_uniform_name = name;
+        $('#file').click();
+      }
+      gui.add(texture_callback, name)
+      mesh.material.uniforms[name] = {
+        type:  "t",
+        value: new THREE.Texture(),
+      };
+    }
     function buildGUI() {
       var uniforms_info = getUniforms();
       if (gui) {
@@ -95,7 +110,7 @@
             addVec(gui_data, row.name, 4);
             break;
           case "sampler2D":
-            gui_data[row.name] = "";
+            addTexture(row.name);
             break;
           default:
             break;
@@ -158,6 +173,25 @@
         renderer.render(scene, camera); // レンダリング
         requestAnimationFrame(tick);
       }
+      $('#file').on("change", function() {
+        var file = this.files[0];
+        var reader = new FileReader();
+        reader.onload = function( event ) {
+          // 「img」でエレメントオブジェクト作成
+          var img = document.createElement( 'img' );
+ 
+          img.src = event.target.result;
+ 
+          // テクスチャの更新（meshは作成済みのオブジェクト）
+          let texture = new THREE.Texture( img );
+          texture.needsUpdate = true;
+          mesh.material.uniforms[select_uniform_name].value = texture;
+          console.log(texture);
+        };
+        // データURLとしてファイルを読み込む
+        reader.readAsDataURL( file );
+        console.log("change");
+      });
     }
   </script>
   <script id="vs" type="x-shader/x-vertex">
@@ -172,5 +206,6 @@
   <canvas id="canvas"></canvas>
   <textarea id="editor_glsl" rows="30" cols="50"></textarea>
   <button type="button" onclick="rebuild();">ビルド</button>
+  <input id="file" type="file" style="display: none;">
 </body>
 </html>
