@@ -45,7 +45,7 @@
     }
 
     let gui, prev_uniforms;
-    function addFloat(data, info) {
+    function addFloat(parent, data, info) {
       if (!data[info.name] || prev_uniforms[info.name].type != "f") {
         data[info.name] = 0.0;
       }
@@ -53,11 +53,11 @@
       if (info.min && info.max) {
         let min = parseFloat(info.min);
         let max = parseFloat(info.max);
-        gui.add(data, info.name, min, max, (max - min) / 10000.0).onChange(function() {
+        parent.add(data, info.name, min, max, (max - min) / 10000.0).onChange(function() {
           mesh.material.uniforms[info.name].value = data[info.name];
         });
       } else {
-        gui.add(data, info.name).onChange(function() {
+        parent.add(data, info.name).onChange(function() {
           mesh.material.uniforms[info.name].value = data[info.name];
         });
       }
@@ -72,11 +72,11 @@
       2: "z",
       3: "w",
     }
-    function addVec(data, info, num) {
-      if (!data[info.name] || prev_uniforms[info.name].type != "f2" || prev_uniforms[info.name].type != "f3" || prev_uniforms[info.name].type != "f4") {
+    function addVec(parent, data, info, num) {
+      if (!data[info.name] || (prev_uniforms[info.name].type != "v2" && prev_uniforms[info.name].type != "v3" && prev_uniforms[info.name].type != "v4")) {
         data[info.name] = {};
       }
-      var folder = gui.addFolder(info.name);
+      var folder = parent.addFolder(info.name);
       for (var i = 0; i < num; i++) {
         const elementName = numToName[i];
         if (!data[info.name][elementName]) {
@@ -103,7 +103,7 @@
     }
 
     let select_uniform_name
-    function addTexture(data, name) {
+    function addTexture(parent, data, name) {
       if (!data[name] || prev_uniforms[name].type != "t") {
         data[name] = {};
       }
@@ -112,7 +112,7 @@
         select_uniform_name = name;
         $('#file').click();
       }
-      gui.add(texture_callback, name)
+      parent.add(texture_callback, name)
       mesh.material.uniforms[name] = {
         type:  "t",
         value: data[name],
@@ -123,8 +123,8 @@
       width:  512,
       height: 720,
     };
-    function addCanvasResize() {
-      var folder = gui.addFolder("resize");
+    function addCanvasResize(parent) {
+      var folder = parent.addFolder("canvas resize");
       folder.add(canvas_resize, "width").onChange(function() {
         renderer.setSize(canvas_resize.width, canvas_resize.height);
       });
@@ -132,13 +132,13 @@
         renderer.setSize(canvas_resize.width, canvas_resize.height);
       });
     }
-    function addRebuildShader() {
+    function addRebuildShader(parent) {
       const rebuild_callback = {
         rebuild: function() {
           rebuild();
         },
       };
-      gui.add(rebuild_callback, "rebuild");
+      parent.add(rebuild_callback, "rebuild");
     }
 
     let gui_data = {};
@@ -148,29 +148,34 @@
         gui.destroy();
       }
       gui = new dat.GUI();
-      addCanvasResize();
-      addRebuildShader();
+      var tools_folder = gui.addFolder("tools");
+      addCanvasResize(tools_folder);
+      addRebuildShader(tools_folder);
+
+      var uniforms_folder = gui.addFolder("uniforms");
       uniforms_info.forEach(function(row) {
         switch (row.type) {
           case "float":
-            addFloat(gui_data, row);
+            addFloat(uniforms_folder, gui_data, row);
             break;
           case "vec2":
-            addVec(gui_data, row, 2);
+            addVec(uniforms_folder, gui_data, row, 2);
             break;
           case "vec3":
-            addVec(gui_data, row, 3);
+            addVec(uniforms_folder, gui_data, row, 3);
             break;
           case "vec4":
-            addVec(gui_data, row, 4);
+            addVec(uniforms_folder, gui_data, row, 4);
             break;
           case "sampler2D":
-            addTexture(gui_data, row.name);
+            addTexture(uniforms_folder, gui_data, row.name);
             break;
           default:
             break;
         }
       });
+      tools_folder.open();
+      uniforms_folder.open();
     }
 
     function rebuild() {
