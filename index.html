@@ -119,11 +119,8 @@
       };
     }
 
-    let canvas_resize = {
-      width:  512,
-      height: 720,
-    };
     function addCanvasResize(parent) {
+      let canvas_resize = renderer.getSize();
       var folder = parent.addFolder("canvas resize");
       folder.add(canvas_resize, "width").onChange(function() {
         renderer.setSize(canvas_resize.width, canvas_resize.height);
