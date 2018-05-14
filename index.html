@@ -119,6 +119,15 @@
       };
     }
 
+    function addRebuildShader() {
+      const rebuild_callback = {
+        rebuild: function() {
+          rebuild();
+        },
+      };
+      gui.add(rebuild_callback, "rebuild");
+    }
+
     let gui_data = {};
     function buildGUI() {
       var uniforms_info = getUniforms();
@@ -126,6 +135,8 @@
         gui.destroy();
       }
       gui = new dat.GUI();
+      // addCanvasSize();
+      addRebuildShader();
       uniforms_info.forEach(function(row) {
         switch (row.type) {
           case "float":
@@ -248,7 +259,6 @@
 <body>
   <canvas id="canvas"></canvas>
   <textarea id="editor_glsl" rows="30" cols="50"></textarea>
-  <button type="button" onclick="rebuild();">ビルド</button>
   <input id="file" type="file" style="display: none;">
 </body>
 </html>
