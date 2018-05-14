@@ -119,6 +119,19 @@
       };
     }
 
+    let canvas_resize = {
+      width:  512,
+      height: 720,
+    };
+    function addCanvasResize() {
+      var folder = gui.addFolder("resize");
+      folder.add(canvas_resize, "width").onChange(function() {
+        renderer.setSize(canvas_resize.width, canvas_resize.height);
+      });
+      folder.add(canvas_resize, "height").onChange(function() {
+        renderer.setSize(canvas_resize.width, canvas_resize.height);
+      });
+    }
     function addRebuildShader() {
       const rebuild_callback = {
         rebuild: function() {
@@ -135,7 +148,7 @@
         gui.destroy();
       }
       gui = new dat.GUI();
-      // addCanvasSize();
+      addCanvasResize();
       addRebuildShader();
       uniforms_info.forEach(function(row) {
         switch (row.type) {
@@ -186,23 +199,24 @@
         console.log("NG");
       }
     }
-    function init() {
-      glslEditor = CodeMirror.fromTextArea(document.getElementById('editor_glsl'), {
-        mode: "x-shader/x-fragment",
-        lineNumbers: true,
-        indentUnit: 2
-      });
-      // サイズを指定
-      const width = 512 * 0.8;
-      const height = 720 * 0.8;
 
+    function createRenderer(width, height) {
       // レンダラーを作成
       renderer = new THREE.WebGLRenderer({
         canvas: document.querySelector('#canvas')
       });
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(width, height);
+    }
 
+    function init() {
+      glslEditor = CodeMirror.fromTextArea(document.getElementById('editor_glsl'), {
+        mode: "x-shader/x-fragment",
+        lineNumbers: true,
+        indentUnit: 2
+      });
+
+      createRenderer(512, 720);
       camera = new THREE.Camera();
       scene = new THREE.Scene();
       var geometry = new THREE.PlaneBufferGeometry( 2, 2 );
@@ -257,7 +271,7 @@
   </script>
 </head>
 <body>
-  <canvas id="canvas"></canvas>
+  <canvas id="canvas" style="margin: auto;"></canvas>
   <textarea id="editor_glsl" rows="30" cols="50"></textarea>
   <input id="file" type="file" style="display: none;">
 </body>
