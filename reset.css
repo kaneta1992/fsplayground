@@ -1,0 +1,31 @@
+*{
+  padding: 0;
+  margin: 0;
+}
+html{
+  font-size: 14px;
+}
+body {
+  font-family: Verdana, "ヒラギノ角ゴ ProN W3", "Hiragino Kaku Gothic ProN", "メイリオ", Meiryo, sans-serif;
+}
+header, footer, nav, menu, article, aside, section, details, figcaption, figure{
+  display: block;
+}
+ul, ol {
+	list-style: none;
+}
+table {
+  border-collapse: collapse;
+}
+img {
+  vertical-align: bottom;
+}
+a img {
+  border: none;
+}
+strong {
+  font-weight: normal;
+}
+i{
+  font-style: normal;
+}

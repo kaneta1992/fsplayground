@@ -2,7 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8"/>
+  <link rel="stylesheet" href="reset.css">
   <link rel="stylesheet" href="codemirror/lib/codemirror.css">
+  <link rel="stylesheet" href="style.css">
   <script src="codemirror/lib/codemirror.js"></script>
   <script src="codemirror/mode/javascript/javascript.js"></script>
   <script src="codemirror/mode/glsl/glsl.js"></script>
@@ -200,7 +202,15 @@
       rebuild();
 
       tick();
-
+      onResize();
+      window.addEventListener( 'resize', onResize, false );
+      function onResize() {
+        let codeElement = glslEditor.getWrapperElement();
+        codeElement.style.width = (window.innerWidth - 75) + 'px';
+        codeElement.style.height = (window.innerHeight - 75) + 'px';
+        console.log(codeElement.style);
+        glslEditor.refresh();
+      }
       function tick() {
         mesh.material.uniforms.time.value += 0.016666;
         renderer.render(scene, camera); // レンダリング
