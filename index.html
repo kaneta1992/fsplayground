@@ -46,10 +46,10 @@
 
     let gui, prev_uniforms;
     function addFloat(parent, data, info) {
-      if (!data[info.name] || prev_uniforms[info.name].type != "f") {
+      let prev_uniform = prev_uniforms[info.name];
+      if (!data[info.name] || (prev_uniform && prev_uniform.type != "f")) {
         data[info.name] = 0.0;
       }
-      console.log(info);
       if (info.min && info.max) {
         let min = parseFloat(info.min);
         let max = parseFloat(info.max);
@@ -73,7 +73,8 @@
       3: "w",
     }
     function addVec(parent, data, info, num) {
-      if (!data[info.name] || (prev_uniforms[info.name].type != "v2" && prev_uniforms[info.name].type != "v3" && prev_uniforms[info.name].type != "v4")) {
+      let prev_uniform = prev_uniforms[info.name];
+      if (!data[info.name] || (prev_uniform && prev_uniform.type != "v2" && prev_uniform.type != "v3" && prev_uniform.type != "v4")) {
         data[info.name] = {};
       }
       var folder = parent.addFolder(info.name);
@@ -104,7 +105,8 @@
 
     let select_uniform_name
     function addTexture(parent, data, name) {
-      if (!data[name] || prev_uniforms[name].type != "t") {
+      let prev_uniform = prev_uniforms[name];
+      if (!data[name] || (prev_uniform && prev_uniform.type != "t")) {
         data[name] = {};
       }
       let texture_callback = {}
@@ -117,6 +119,20 @@
         type:  "t",
         value: data[name],
       };
+      setImageGUI(name, data[name].base64);
+    }
+
+    function setImageGUI(name, img) {
+      if (!img) {
+        return;
+      }
+      var elem = null;
+      $("div .function").each(function(){
+          if($(this).text() == name) elem = $(this);
+      });
+      elem.css("background-image" , "url(" + img + ")");
+      elem.css("background-size" , "cover");
+      elem.css("background-position" , "center center");
     }
 
     function addCanvasResize(parent) {
@@ -277,7 +293,6 @@
         let codeElement = glslEditor.getWrapperElement();
         codeElement.style.width = (window.innerWidth - 75) + 'px';
         codeElement.style.height = (window.innerHeight - 75) + 'px';
-        console.log(codeElement.style);
         glslEditor.refresh();
       }
       function tick() {
@@ -293,16 +308,17 @@
           var img = document.createElement( 'img' );
  
           img.src = event.target.result;
- 
+
+          setImageGUI(select_uniform_name, img.src);
+
           // テクスチャの更新（meshは作成済みのオブジェクト）
           gui_data[select_uniform_name] = new THREE.Texture( img );
           gui_data[select_uniform_name].needsUpdate = true;
+          gui_data[select_uniform_name].base64 = img.src;
           mesh.material.uniforms[select_uniform_name].value = gui_data[select_uniform_name];
-          console.log(gui_data[select_uniform_name]);
         };
         // データURLとしてファイルを読み込む
         reader.readAsDataURL( file );
-        console.log("change");
       });
     }
   </script>
