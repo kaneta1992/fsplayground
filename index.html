@@ -145,6 +145,14 @@
         is_auto_rebuild_shader = auto_rebuild_shader.auto_rebuild;
       });
     }
+    function addPixelRatio(parent) {
+      const pixel_ratio = {
+        pixel_ratio: renderer.getPixelRatio(),
+      };
+      parent.add(pixel_ratio, "pixel_ratio", 0.01, window.devicePixelRatio, 0.01).onChange(function() {
+        renderer.setPixelRatio(pixel_ratio.pixel_ratio);
+      });
+    }
 
     let gui_data = {};
     function buildGUI() {
@@ -157,6 +165,7 @@
       addCanvasResize(tools_folder);
       addRebuildShader(tools_folder);
       addAutoRebuildShader(tools_folder);
+      addPixelRatio(tools_folder);
 
       var uniforms_folder = gui.addFolder("uniforms");
       uniforms_info.forEach(function(row) {
