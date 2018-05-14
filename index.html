@@ -140,6 +140,14 @@
       };
       parent.add(rebuild_callback, "rebuild");
     }
+    function addAutoRebuildShader(parent) {
+      const auto_rebuild_shader = {
+        auto_rebuild: is_auto_rebuild_shader,
+      };
+      parent.add(auto_rebuild_shader, "auto_rebuild").onChange(function() {
+        is_auto_rebuild_shader = auto_rebuild_shader.auto_rebuild;
+      });
+    }
 
     let gui_data = {};
     function buildGUI() {
@@ -151,6 +159,7 @@
       var tools_folder = gui.addFolder("tools");
       addCanvasResize(tools_folder);
       addRebuildShader(tools_folder);
+      addAutoRebuildShader(tools_folder);
 
       var uniforms_folder = gui.addFolder("uniforms");
       uniforms_info.forEach(function(row) {
@@ -214,11 +223,19 @@
       renderer.setSize(width, height);
     }
 
+    let compile_timer, is_auto_rebuild_shader = true;
     function init() {
       glslEditor = CodeMirror.fromTextArea(document.getElementById('editor_glsl'), {
         mode: "x-shader/x-fragment",
         lineNumbers: true,
-        indentUnit: 2
+        indentUnit: 2,
+      });
+      glslEditor.setValue(initial_fs);
+      glslEditor.on("change", function() {
+        if (is_auto_rebuild_shader) {
+          clearTimeout(compile_timer);
+          compile_timer = setTimeout(rebuild, 500);
+        }
       });
 
       createRenderer(512, 720);
@@ -228,7 +245,6 @@
       mesh = new THREE.Mesh(geometry, null);
       mesh.material = {uniforms: {}};
       scene.add(mesh);
-      glslEditor.setValue(initial_fs);
       rebuild();
 
       tick();
