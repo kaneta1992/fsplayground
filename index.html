@@ -203,6 +203,8 @@
             value: 0.0
           },
         },
+        blending: THREE.NormalBlending,
+        transparent: true,
       });
       let backup_material = mesh.material;
       mesh.material = material;
@@ -227,6 +229,7 @@
       });
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(width, height);
+      renderer.setClearColor("gray");
     }
 
     let compile_timer, is_auto_rebuild_shader = true;
