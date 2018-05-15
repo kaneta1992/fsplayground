@@ -183,6 +183,14 @@
         }
       });
     }
+    let vim_mode = {
+      vim_mode: false,
+    };
+    function addVimMode(parent) {
+      parent.add(vim_mode, "vim_mode").onChange(function() {
+        glslEditor.setOption("vimMode", vim_mode.vim_mode);
+      });
+    }
 
     let gui_data = {};
     function buildGUI() {
@@ -190,13 +198,14 @@
       if (gui) {
         gui.destroy();
       }
-      gui = new dat.GUI();
+      gui = new dat.GUI({hideable: false});
       var tools_folder = gui.addFolder("tools");
       addCanvasResize(tools_folder);
       addRebuildShader(tools_folder);
       addAutoRebuildShader(tools_folder);
       addPixelRatio(tools_folder);
       addHideCode(tools_folder);
+      addVimMode(tools_folder);
 
       var uniforms_folder = gui.addFolder("uniforms");
       uniforms_info.forEach(function(row) {
