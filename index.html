@@ -108,8 +108,9 @@
     function addTexture(parent, data, name) {
       let prev_uniform = prev_uniforms[name];
       if (!data[name] || (prev_uniform && prev_uniform.type != "t")) {
-        data[name] = {};
+        data[name] = null;
       }
+
       let texture_callback = {}
       texture_callback[name] = function() {
         select_uniform_name = name;
@@ -120,7 +121,9 @@
         type:  "t",
         value: data[name],
       };
-      setImageGUI(name, data[name].base64);
+      if (data[name]) {
+        setImageGUI(name, data[name].base64);
+      }
     }
 
     function setImageGUI(name, img) {
@@ -317,21 +320,30 @@
         var file = this.files[0];
         var reader = new FileReader();
         reader.onload = function( event ) {
+          console.log("create image " + select_uniform_name);
           // 「img」でエレメントオブジェクト作成
           var img = document.createElement( 'img' );
  
           img.src = event.target.result;
 
           setImageGUI(select_uniform_name, img.src);
+          console.log("setted image gui");
 
           // テクスチャの更新（meshは作成済みのオブジェクト）
+          if (gui_data[select_uniform_name]) {
+            gui_data[select_uniform_name].dispose();
+            console.log("disposed");
+          }
           gui_data[select_uniform_name] = new THREE.Texture( img );
           gui_data[select_uniform_name].needsUpdate = true;
           gui_data[select_uniform_name].base64 = img.src;
           mesh.material.uniforms[select_uniform_name].value = gui_data[select_uniform_name];
+          console.log("created three js object " + select_uniform_name);
+          $('#file').val("");
         };
         // データURLとしてファイルを読み込む
         reader.readAsDataURL( file );
+        console.log("read start");
       });
     }
   </script>
