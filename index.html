@@ -337,6 +337,7 @@
           gui_data[select_uniform_name] = new THREE.Texture( img );
           gui_data[select_uniform_name].needsUpdate = true;
           gui_data[select_uniform_name].base64 = img.src;
+          gui_data[select_uniform_name].minFilter = THREE.LinearFilter;
           mesh.material.uniforms[select_uniform_name].value = gui_data[select_uniform_name];
           console.log("created three js object " + select_uniform_name);
           $('#file').val("");
